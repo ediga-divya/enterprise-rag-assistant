@@ -3,39 +3,23 @@ from pypdf import PdfReader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
-from langchain_ollama import ChatOllama
 
-st.title("Enterprise RAG Assistant - Version 2")
+st.title("Enterprise RAG Assistant")
 
 st.write(
-    "Upload a PDF and ask questions. This version uses ChromaDB retrieval and Ollama Llama 3.2 to generate AI answers."
+    "Upload a PDF and ask questions. This deployable version uses ChromaDB and HuggingFace embeddings for semantic document search."
 )
-
-llm = ChatOllama(model="llama3.2")
 
 
 def generate_answer(question, context):
-    prompt = f"""
-You are an expert recruiter and technical interviewer.
+    return f"""
+Based on the uploaded PDF, here is the most relevant information:
 
-Answer the question using only the provided context.
-
-Use bullet points when appropriate.
-Provide concise and professional answers.
-
-If the answer is not present in the context, say:
-"I could not find that information in the uploaded PDF."
-
-Context:
 {context}
 
-Question:
+Question asked:
 {question}
-
-Answer:
 """
-    response = llm.invoke(prompt)
-    return response.content
 
 
 uploaded_file = st.file_uploader("Upload a PDF", type="pdf")
@@ -75,14 +59,11 @@ if uploaded_file:
     question = st.text_input("Ask a question about your PDF")
 
     if question:
-        results = vector_store.similarity_search(question, k=5)
+        results = vector_store.similarity_search(question, k=3)
         context = "\n\n".join([doc.page_content for doc in results])
 
-        with st.spinner("Generating answer with Llama 3.2..."):
-            answer = generate_answer(question, context)
-
-        st.subheader("AI Generated Answer")
-        st.write(answer)
+        st.subheader("Retrieved Answer Context")
+        st.write(generate_answer(question, context))
 
         with st.expander("View Retrieved Context"):
             st.write(context)
