@@ -3,37 +3,33 @@ from pypdf import PdfReader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
+from langchain_ollama import ChatOllama
 
-st.title("Enterprise RAG Assistant")
+st.title("Enterprise RAG Assistant - Version 2")
 
 st.write(
-    "Upload a PDF and ask questions. This app retrieves relevant sections using ChromaDB and HuggingFace embeddings."
+    "Upload a PDF and ask questions. This version uses ChromaDB retrieval and Ollama Llama 3.2 to generate AI answers."
 )
 
+llm = ChatOllama(model="llama3.2")
+
 def generate_answer(question, context):
-    question_lower = question.lower()
+    prompt = f"""
+You are an enterprise document assistant.
 
-    if "cloud" in question_lower:
-        return "The document mentions AWS services including S3, EC2, DynamoDB, Redshift, and Glue. It also mentions Azure Cloud Services, cloud computing, and scalable cloud architectures."
+Answer the user's question using only the context below.
+If the answer is not in the context, say: "I could not find that information in the uploaded PDF."
 
-    elif "database" in question_lower or "databases" in question_lower:
-        return "The document mentions databases including Oracle, Redshift, and NoSQL."
-
-    elif "programming" in question_lower or "languages" in question_lower:
-        return "The document mentions programming skills including Python, SQL, REST APIs, Object-Oriented Programming, and Data Structures & Algorithms."
-
-    elif "visualization" in question_lower or "analytics" in question_lower:
-        return "The document mentions visualization and analytics tools including Tableau, Power BI, and AWS QuickSight."
-
-    elif "data engineering" in question_lower or "etl" in question_lower:
-        return "The document mentions data engineering skills including ETL pipelines, Apache Airflow, data warehousing, data modeling, schema design, and performance optimization."
-
-    else:
-        return f"""
-Based on the uploaded PDF, here is the most relevant information:
-
+Context:
 {context}
+
+Question:
+{question}
+
+Answer:
 """
+    response = llm.invoke(prompt)
+    return response.content
 
 uploaded_file = st.file_uploader("Upload a PDF", type="pdf")
 
@@ -49,8 +45,8 @@ if uploaded_file:
             text += page_text + "\n"
 
     splitter = RecursiveCharacterTextSplitter(
-        chunk_size=500,
-        chunk_overlap=50
+        chunk_size=700,
+        chunk_overlap=100
     )
 
     chunks = splitter.split_text(text)
@@ -72,10 +68,14 @@ if uploaded_file:
     question = st.text_input("Ask a question about your PDF")
 
     if question:
-        results = vector_store.similarity_search(question, k=1)
+        results = vector_store.similarity_search(question, k=3)
+        context = "\n\n".join([doc.page_content for doc in results])
 
-        context = results[0].page_content
-        answer = generate_answer(question, context)
+        with st.spinner("Generating answer with Llama 3.2..."):
+            answer = generate_answer(question, context)
 
-        st.subheader("Generated Answer")
+        st.subheader("AI Generated Answer")
         st.write(answer)
+
+        with st.expander("View Retrieved Context"):
+            st.write(context)
