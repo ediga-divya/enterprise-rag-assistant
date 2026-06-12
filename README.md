@@ -12,7 +12,15 @@ This project is a Retrieval-Augmented Generation (RAG) application built using S
 
 \## Features
 
+\- ChromaDB Vector Database
 
+\- Semantic Search
+
+\- Ollama Integration
+
+\- Llama 3.2 Local LLM
+
+\- AI Generated Answers
 
 \- PDF Upload
 
