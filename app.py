@@ -59,7 +59,7 @@ if uploaded_file:
     question = st.text_input("Ask a question about your PDF")
 
     if question:
-        results = vector_store.similarity_search(question, k=3)
+        results = vector_store.similarity_search(question, k=1)
         context = "\n\n".join([doc.page_content for doc in results])
 
         st.subheader("Retrieved Answer Context")
