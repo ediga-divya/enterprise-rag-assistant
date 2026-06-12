@@ -13,12 +13,18 @@ st.write(
 
 llm = ChatOllama(model="llama3.2")
 
+
 def generate_answer(question, context):
     prompt = f"""
-You are an enterprise document assistant.
+You are an expert recruiter and technical interviewer.
 
-Answer the user's question using only the context below.
-If the answer is not in the context, say: "I could not find that information in the uploaded PDF."
+Answer the question using only the provided context.
+
+Use bullet points when appropriate.
+Provide concise and professional answers.
+
+If the answer is not present in the context, say:
+"I could not find that information in the uploaded PDF."
 
 Context:
 {context}
@@ -30,6 +36,7 @@ Answer:
 """
     response = llm.invoke(prompt)
     return response.content
+
 
 uploaded_file = st.file_uploader("Upload a PDF", type="pdf")
 
@@ -68,7 +75,7 @@ if uploaded_file:
     question = st.text_input("Ask a question about your PDF")
 
     if question:
-        results = vector_store.similarity_search(question, k=3)
+        results = vector_store.similarity_search(question, k=5)
         context = "\n\n".join([doc.page_content for doc in results])
 
         with st.spinner("Generating answer with Llama 3.2..."):
